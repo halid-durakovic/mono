@@ -60,5 +60,9 @@ build-llvm: configure-llvm
 install-llvm: build-llvm | $(LLVM_PREFIX)
 	$(if $(NINJA),$(NINJA),$(MAKE)) -C $(LLVM_BUILD) install
 
+# FIXME: URL should be http://xamjenkinsartifact.blob.core.windows.net/build-package-osx-llvm-$(NEEDED_LLVM_BRANCH)/llvm-osx64-$(NEEDED_LLVM_VERSION).tar.gz
+download-llvm:
+	wget --no-verbose -O - http://xamjenkinsartifact.blob.core.windows.net/build-package-osx-llvm-release60/llvm-osx64-$(NEEDED_LLVM_VERSION).tar.gz | tar xzf -
+
 clean-llvm:
 	$(RM) -r $(LLVM_BUILD) $(LLVM_PREFIX)

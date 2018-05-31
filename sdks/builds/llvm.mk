@@ -3,6 +3,13 @@ LLVM_SRC?=$(TOP)/sdks/builds/toolchains/llvm
 $(dir $(LLVM_SRC)):
 	mkdir -p $@
 
+.stamp-llvm-download: | setup-llvm-llvm32 setup-llvm-llvm64
+	$(MAKE) -C $(TOP)/llvm -f build.mk download-llvm
+	$(RM) -r $(TOP)/sdks/out/llvm-llvm32 $(TOP)/sdks/out/llvm-llvm64
+	mv $(TOP)/llvm/usr32 $(TOP)/sdks/out/llvm-llvm32
+	mv $(TOP)/llvm/usr64 $(TOP)/sdks/out/llvm-llvm64
+	touch $@
+
 ##
 # Parameters
 #  $(1): target
@@ -28,6 +35,9 @@ package-llvm-$(1): | $$(dir $(LLVM_SRC))
 		LLVM_BUILD="$$(TOP)/sdks/builds/llvm-$(1)" \
 		LLVM_PREFIX="$$(TOP)/sdks/out/llvm-$(1)" \
 		LLVM_CMAKE_ARGS="$$(_llvm-$(1)_CMAKE_ARGS)"
+
+.PHONY: download-llvm-$(1)
+download-llvm-$(1): .stamp-llvm-download
 
 .PHONY: clean-llvm-$(1)
 clean-llvm-$(1):
