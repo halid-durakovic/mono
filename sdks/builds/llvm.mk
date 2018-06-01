@@ -1,7 +1,3 @@
-LLVM_SRC?=$(TOP)/sdks/builds/toolchains/llvm
-
-$(dir $(LLVM_SRC)):
-	mkdir -p $@
 
 .stamp-llvm-download: | setup-llvm-llvm32 setup-llvm-llvm64
 	$(MAKE) -C $(TOP)/llvm -f build.mk download-llvm
@@ -22,16 +18,15 @@ _llvm-$(1)_CMAKE_ARGS = \
 .stamp-llvm-$(1)-toolchain:
 	touch $$@
 
-.stamp-llvm-$(1)-configure: | $$(dir $(LLVM_SRC))
+.stamp-llvm-$(1)-configure:
 	touch $$@
 
 .PHONY: build-custom-llvm-$(1)
 build-custom-llvm-$(1):
 
 .PHONY: package-llvm-$(1)
-package-llvm-$(1): | $$(dir $(LLVM_SRC))
+package-llvm-$(1):
 	$$(MAKE) -C $$(TOP)/llvm -f build.mk install-llvm \
-		LLVM_PATH="$(LLVM_SRC)" \
 		LLVM_BUILD="$$(TOP)/sdks/builds/llvm-$(1)" \
 		LLVM_PREFIX="$$(TOP)/sdks/out/llvm-$(1)" \
 		LLVM_CMAKE_ARGS="$$(_llvm-$(1)_CMAKE_ARGS)"
@@ -42,7 +37,6 @@ download-llvm-$(1): .stamp-llvm-download
 .PHONY: clean-llvm-$(1)
 clean-llvm-$(1):
 	$$(MAKE) -C $$(TOP)/llvm -f build.mk clean-llvm \
-		LLVM_PATH="$(LLVM_SRC)" \
 		LLVM_BUILD="$$(TOP)/sdks/builds/llvm-$(1)" \
 		LLVM_PREFIX="$$(TOP)/sdks/out/llvm-$(1)"
 
@@ -66,7 +60,7 @@ _llvm-$(1)_CMAKE=$$(MXE_PREFIX)/bin/$(2)-w64-mingw32$$(if $$(filter $(UNAME),Dar
 # -DLLVM_ENABLE_THREADS=0 is needed because mxe doesn't define std::mutex etc.
 # -DLLVM_BUILD_EXECUTION_ENGINE=Off is needed because it depends on threads
 _llvm-$(1)_CMAKE_ARGS = \
-	-DCROSS_TOOLCHAIN_FLAGS_NATIVE=-DCMAKE_TOOLCHAIN_FILE=$(LLVM_SRC)/cmake/modules/NATIVE.cmake \
+	-DCROSS_TOOLCHAIN_FLAGS_NATIVE=-DCMAKE_TOOLCHAIN_FILE=$(TOP)/external/llvm/cmake/modules/NATIVE.cmake \
 	-DLLVM_ENABLE_THREADS=Off \
 	-DLLVM_BUILD_EXECUTION_ENGINE=Off \
 	$$(llvm-$(1)_CMAKE_ARGS)
@@ -81,10 +75,9 @@ _llvm-$(1)_CMAKE_ARGS = \
 build-custom-llvm-$(1):
 
 .PHONY: package-llvm-$(1)
-package-llvm-$(1): | $$(dir $(LLVM_SRC))
+package-llvm-$(1):
 	$$(MAKE) -C $$(TOP)/llvm -f build.mk install-llvm \
 		CMAKE=$$(_llvm-$(1)_CMAKE) \
-		LLVM_PATH="$(LLVM_SRC)" \
 		LLVM_BUILD="$$(TOP)/sdks/builds/llvm-$(1)" \
 		LLVM_PREFIX="$$(TOP)/sdks/out/llvm-$(1)" \
 		LLVM_CMAKE_ARGS="$$(_llvm-$(1)_CMAKE_ARGS)"
@@ -93,7 +86,6 @@ package-llvm-$(1): | $$(dir $(LLVM_SRC))
 clean-llvm-$(1):
 	$$(MAKE) -C $$(TOP)/llvm -f build.mk clean-llvm \
 		CMAKE=$$(_llvm-$(1)_CMAKE) \
-		LLVM_PATH="$(LLVM_SRC)" \
 		LLVM_BUILD="$$(TOP)/sdks/builds/llvm-$(1)" \
 		LLVM_PREFIX="$$(TOP)/sdks/out/llvm-$(1)"
 

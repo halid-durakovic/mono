@@ -1,5 +1,5 @@
 
-EXTRA_DIST=SUBMODULES.json build.mk
+EXTRA_DIST=build.mk
 
 if INTERNAL_LLVM
 .PHONY: all-local

@@ -1,43 +1,19 @@
-#
-# Conditional submodule for llvm
-#
-# make reset-llvm will checkout a version of llvm which is suitable for this version of mono
-# into $top_srcdir/llvm/llvm.
-#
 
 top_srcdir ?= $(realpath $(CURDIR)/..)
 
-LLVM_PATH ?= $(realpath $(top_srcdir)/external/llvm)
 LLVM_BUILD ?= $(realpath $(top_srcdir)/llvm/build)
 LLVM_PREFIX ?= $(realpath $(top_srcdir)/llvm/usr)
+
+LLVM_BRANCH  := $(shell git -C "$(realpath $(top_srcdir)/external/llvm)" rev-parse --abbrev-ref HEAD)
+LLVM_VERSION := $(shell git -C "$(realpath $(top_srcdir)/external/llvm)" rev-parse HEAD)
 
 CMAKE := $(or $(CMAKE),$(shell which cmake))
 NINJA := $(shell which ninja)
 
-SUBMODULES_CONFIG_FILE = $(top_srcdir)/llvm/SUBMODULES.json
-include $(top_srcdir)/scripts/submodules/versions.mk
-
-$(eval $(call ValidateVersionTemplate,llvm,LLVM))
-
-# Bump the given submodule to the revision given by the REV make variable
-# If COMMIT is 1, commit the change
-bump-llvm: __bump-version-llvm
-
-# Bump the given submodule to the branch given by the BRANCH/REMOTE_BRANCH make variables
-# If COMMIT is 1, commit the change
-bump-branch-llvm: __bump-branch-llvm
-
-# Bump the given submodule to its current GIT version
-# If COMMIT is 1, commit the change
-bump-current-llvm: __bump-current-version-llvm
-
 $(LLVM_BUILD) $(LLVM_PREFIX):
 	mkdir -p $@
 
-$(LLVM_PATH)/CMakeLists.txt:
-	$(MAKE) reset-llvm
-
-$(LLVM_BUILD)/$(if $(NINJA),build.ninja,Makefile): $(LLVM_PATH)/CMakeLists.txt | $(LLVM_BUILD)
+$(LLVM_BUILD)/$(if $(NINJA),build.ninja,Makefile): $(top_srcdir)/external/llvm/CMakeLists.txt build.mk | $(LLVM_BUILD)
 	cd $(LLVM_BUILD) && $(CMAKE) \
 		$(if $(NINJA),-G Ninja) \
 		-DCMAKE_INSTALL_PREFIX="$(LLVM_PREFIX)" \
@@ -60,9 +36,9 @@ build-llvm: configure-llvm
 install-llvm: build-llvm | $(LLVM_PREFIX)
 	$(if $(NINJA),$(NINJA),$(MAKE)) -C $(LLVM_BUILD) install
 
-# FIXME: URL should be http://xamjenkinsartifact.blob.core.windows.net/build-package-osx-llvm-$(NEEDED_LLVM_BRANCH)/llvm-osx64-$(NEEDED_LLVM_VERSION).tar.gz
+# FIXME: URL should be http://xamjenkinsartifact.blob.core.windows.net/build-package-osx-llvm-$(LLVM_BRANCH)/llvm-osx64-$(LLVM_VERSION).tar.gz
 download-llvm:
-	wget --no-verbose -O - http://xamjenkinsartifact.blob.core.windows.net/build-package-osx-llvm-release60/llvm-osx64-$(NEEDED_LLVM_VERSION).tar.gz | tar xzf -
+	wget --no-verbose -O - http://xamjenkinsartifact.blob.core.windows.net/build-package-osx-llvm-release60/llvm-osx64-$(LLVM_VERSION).tar.gz | tar xzf -
 
 clean-llvm:
 	$(RM) -r $(LLVM_BUILD) $(LLVM_PREFIX)
