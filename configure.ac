@@ -3737,7 +3737,11 @@ internal_llvm=0
 if test "x$enable_llvm" = "xyes"; then
 	# llvm config options
 	if test "x$host_win32" != "xyes"; then
-		AC_PATH_PROG(EXTERNAL_LLVM_CONFIG, llvm-config, no)
+		if test -n "$with_llvm"; then
+			AC_PATH_PROG(EXTERNAL_LLVM_CONFIG, llvm-config, no, $with_llvm/bin)
+		else
+			AC_PATH_PROG(EXTERNAL_LLVM_CONFIG, llvm-config, no)
+		fi
 		if test "x$EXTERNAL_LLVM_CONFIG" = "xno"; then
 			internal_llvm=1
 		fi
@@ -3776,9 +3780,13 @@ if test "x$enable_llvm" = "xyes"; then
 			;;
 		esac
 
-		LLVM_CFLAGS_EXTERNAL="-I$with_llvm/include -DNDEBUG -D__NO_CTYPE_INLINE -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS"
+		if test -n "$with_llvm"; then
+			LLVM_CFLAGS_EXTERNAL="-I$with_llvm/include"
+			LLVM_LDFLAGS_EXTERNAL="-L$with_llvm/lib"
+		fi
+
+		LLVM_CFLAGS_EXTERNAL="$LLVM_CFLAGS_EXTERNAL -DNDEBUG -D__NO_CTYPE_INLINE -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS"
 		LLVM_CXXFLAGS_EXTERNAL="$LLVM_CFLAGS -std=gnu++11 -fvisibility-inlines-hidden -fno-rtti -Woverloaded-virtual -Wcast-qual"
-		LLVM_LDFLAGS_EXTERNAL="-L$with_llvm/lib"
 		LLVM_SYSTEM_LIBS="-lshell32 -lpsapi -limagehlp -ldbghelp -lm"
 		LLVM_LIBS_EXTERNAL="-lLLVMLTO -lLLVMObjCARCOpts -lLLVMLinker -lLLVMipo -lLLVMVectorize -lLLVMBitWriter \
 		-lLLVMTableGen -lLLVMDebugInfo -lLLVMOption -lLLVMSelectionDAG -lLLVMAsmPrinter \
@@ -3797,8 +3805,6 @@ if test "x$enable_llvm" = "xyes"; then
 	fi # win32
 
 	AC_DEFINE(ENABLE_LLVM, 1, [Enable the LLVM back end])
-	ENABLE_LLVM=1
-	AC_SUBST(ENABLE_LLVM)
 fi
 
 AM_CONDITIONAL(INTERNAL_LLVM, [test "x$internal_llvm" != "x0"])
